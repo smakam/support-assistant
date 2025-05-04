@@ -29,6 +29,7 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str
+    SQLITE_URL: str = "sqlite:///kgen_gaming_support_advanced.db"
 
     # Vector Store
     VECTOR_STORE_PATH: str = "vector_store"
@@ -36,6 +37,18 @@ class Settings(BaseSettings):
 
     # Environment
     ENVIRONMENT: str = "development"
+
+    @property
+    def use_sqlite_db(self) -> bool:
+        """Determine if we should use SQLite instead of the configured DATABASE_URL"""
+        return self.ENVIRONMENT.lower() == "development" and os.environ.get("USE_SQLITE", "false").lower() == "true"
+
+    @property
+    def active_db_url(self) -> str:
+        """Get the active database URL based on environment"""
+        if self.use_sqlite_db:
+            return self.SQLITE_URL
+        return self.DATABASE_URL
 
     # Feedback storage
     FEEDBACK_DIR: str = "feedback"

@@ -1,0 +1,26 @@
+services:
+  # Backend API service
+  - type: web
+    name: kgen-support-api
+    env: docker
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kgen-support-db
+          property: connectionString
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: false
+    autoDeploy: true
+
+databases:
+  # PostgreSQL database (already created manually)
+  - name: kgen-support-db
+    databaseName: kgen_support

@@ -12,7 +12,7 @@ class DynamicDataAgent:
             api_key=settings.OPENAI_API_KEY,
             temperature=0
         )
-        self.db = SQLDatabase.from_uri(settings.DATABASE_URL)
+        self.db = SQLDatabase.from_uri(settings.active_db_url)
         
         # Get the actual database schema
         self.db_schema = self.db.get_table_info()
