@@ -7,8 +7,8 @@ python-dotenv==1.0.0
 # Use Python's built-in uuid module instead
 # uuid==1.30
 
-# Add Pillow with binary package option
-Pillow-SIMD
+# Use precompiled Pillow instead of Pillow-SIMD which also requires compilation
+Pillow==9.5.0
 
 # For JWT handling
 python-jose==3.3.0 
