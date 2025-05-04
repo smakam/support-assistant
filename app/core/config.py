@@ -6,7 +6,8 @@ import os
 
 
 class Settings(BaseSettings):
-    API_V1_STR: str = "/api/v1"
+    API_V1_STR: str = "/api/v1"  # We'll use this internally
+    API_V1_PREFIX: Optional[str] = None  # To accept from .env
     PROJECT_NAME: str = "KGen AI Support"
     BACKEND_CORS_ORIGINS: List[Union[str, AnyHttpUrl]] = []
 
@@ -30,6 +31,7 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str
     SQLITE_URL: str = "sqlite:///kgen_gaming_support_advanced.db"
+    USE_SQLITE: Optional[str] = None
 
     # Vector Store
     VECTOR_STORE_PATH: str = "vector_store"
@@ -41,7 +43,7 @@ class Settings(BaseSettings):
     @property
     def use_sqlite_db(self) -> bool:
         """Determine if we should use SQLite instead of the configured DATABASE_URL"""
-        return self.ENVIRONMENT.lower() == "development" and os.environ.get("USE_SQLITE", "false").lower() == "true"
+        return self.ENVIRONMENT.lower() == "development" and (self.USE_SQLITE or "false").lower() == "true"
 
     @property
     def active_db_url(self) -> str:
@@ -70,6 +72,7 @@ class Settings(BaseSettings):
         case_sensitive = True
         env_file = ".env"
         env_file_encoding = "utf-8"
+        extra = "ignore"  # Allow extra fields in .env file
 
 
 settings = Settings()
