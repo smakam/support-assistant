@@ -1,0 +1,13 @@
+- XP boosters provide 2x experience gain for 24 hours and cannot be stacked.
+- Legendary items are the rarest and provide the highest stat bonuses.
+- Clans are ranked based on average member level, total activity points, and match performance.
+- VIP players receive exclusive rewards, reduced matchmaking time, and access to premium support.
+- Casual matches do not count toward leaderboard points but still grant experience.
+- Customer support prioritizes tickets based on issue category and priority level.
+- Refunds are not issued for consumables or one-time use items like XP boosters or scrolls.
+- Balanced clans have equal distribution of magic and physical players, suitable for hybrid tournaments.
+- Achievements are categorized into Bronze, Silver, and Gold tiers, representing increasing levels of difficulty and rarity.
+- Gold achievements are awarded for exceptional accomplishments such as winning consecutive ranked matches or dealing high cumulative damage.
+- Ranked matches contribute to leaderboard rankings and reward players with higher experience and competitive points.
+- Magic clans specialize in spell-based attacks and support abilities, whereas PVP clans focus on physical combat and competitive matchups.
+- Consumables like XP boosters and teleport scrolls are single-use items that enhance performance temporarily.
