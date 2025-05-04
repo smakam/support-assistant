@@ -6,7 +6,7 @@ import uuid
 import os
 
 # Constants for production
-API_URL = os.environ.get("API_URL", "https://your-production-api.render.com/api/v1")
+API_URL = os.environ.get("API_URL", "https://kgen-support-api.onrender.com/api/v1")
 DEMO_TOKEN = os.environ.get("DEMO_TOKEN", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkZW1vX3VzZXIiLCJyb2xlIjoiZ2FtZXIifQ.FxNR_1qX77eczBuigdDESqWq56TqA-E3ybSHw-7PfRA")
 
 # Configure page
