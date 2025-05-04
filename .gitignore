@@ -66,4 +66,4 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *,cover
-.hypothesis/ 
+.hypothesis/ .env
