@@ -7,8 +7,8 @@ python-dotenv==1.0.0
 # Use Python's built-in uuid module instead
 # uuid==1.30
 
-# Use precompiled Pillow instead of Pillow-SIMD which also requires compilation
-Pillow==9.5.0
+# Remove Pillow reference - Streamlit already includes it
+# Pillow==9.5.0
 
 # For JWT handling
 python-jose==3.3.0 
