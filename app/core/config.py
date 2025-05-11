@@ -7,7 +7,7 @@ import os
 
 class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"  # We'll use this internally
-    API_V1_PREFIX: Optional[str] = None  # To accept from .env
+    API_V1_PREFIX: str = "/api/v1"  # Always starts with '/'; can be overridden by .env
     PROJECT_NAME: str = "KGen AI Support"
     BACKEND_CORS_ORIGINS: List[Union[str, AnyHttpUrl]] = []
 
