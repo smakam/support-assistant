@@ -91,14 +91,14 @@ def main():
                             try:
                                 submit_feedback(query_id, "positive")
                                 st.session_state['feedback_given'][query_id] = "positive"
-                                st.rerun()
+                                st.experimental_rerun()
                             except Exception as e:
                                 st.error(f"Error submitting feedback: {str(e)}")
                         
                         if col2.button("👎", key=f"hist_thumbs_down_{query_id}"):
                             st.session_state['feedback_given'][query_id] = "negative_pending"
                             st.session_state['negative_feedback'][query_id] = ""
-                            st.rerun()
+                            st.experimental_rerun()
                     elif st.session_state['feedback_given'][query_id] == "positive":
                         st.success("Thanks for your positive feedback!")
                     elif st.session_state['feedback_given'][query_id] == "negative_pending":
@@ -107,7 +107,7 @@ def main():
                             try:
                                 submit_feedback(query_id, "negative", comment)
                                 st.session_state['feedback_given'][query_id] = "negative_submitted"
-                                st.rerun()
+                                st.experimental_rerun()
                             except Exception as e:
                                 st.error(f"Error submitting feedback: {str(e)}")
                     elif st.session_state['feedback_given'][query_id] == "negative_submitted":
@@ -217,14 +217,14 @@ def main():
                             try:
                                 submit_feedback(query_id, "positive")
                                 st.session_state['feedback_given'][query_id] = "positive"
-                                st.rerun()
+                                st.experimental_rerun()
                             except Exception as e:
                                 st.error(f"Error submitting feedback: {str(e)}")
                         
                         if col2.button("👎", key=f"thumbs_down_{query_id}"):
                             st.session_state['feedback_given'][query_id] = "negative_pending"
                             st.session_state['negative_feedback'][query_id] = ""
-                            st.rerun()
+                            st.experimental_rerun()
                     elif st.session_state['feedback_given'][query_id] == "positive":
                         st.success("Thanks for your positive feedback!")
                     elif st.session_state['feedback_given'][query_id] == "negative_pending":
@@ -233,7 +233,7 @@ def main():
                             try:
                                 submit_feedback(query_id, "negative", comment)
                                 st.session_state['feedback_given'][query_id] = "negative_submitted"
-                                st.rerun()
+                                st.experimental_rerun()
                             except Exception as e:
                                 st.error(f"Error submitting feedback: {str(e)}")
                     elif st.session_state['feedback_given'][query_id] == "negative_submitted":
@@ -274,7 +274,7 @@ def main():
                     st.session_state['followup_context'] = ""
                 
                 # Force a rerun to refresh the chat input
-                st.rerun()
+                st.experimental_rerun()
                     
             except Exception as e:
                 st.error(f"Error: {str(e)}")
@@ -302,7 +302,7 @@ def main():
             })
             # Set the sample question to be processed
             st.session_state['sample_question'] = q
-            st.rerun()
+            st.experimental_rerun()
     
     st.sidebar.markdown("---")
     st.sidebar.markdown("#### Dynamic Data Questions")
@@ -324,7 +324,7 @@ def main():
             })
             # Set the sample question to be processed
             st.session_state['sample_question'] = q
-            st.rerun()
+            st.experimental_rerun()
     
     st.sidebar.markdown("---")
     st.sidebar.markdown("#### Hybrid Questions")
@@ -346,7 +346,7 @@ def main():
             })
             # Set the sample question to be processed
             st.session_state['sample_question'] = q
-            st.rerun()
+            st.experimental_rerun()
     
     st.sidebar.markdown("---")
     st.sidebar.markdown("#### Follow-Up Requiring Questions")
@@ -368,7 +368,7 @@ def main():
             })
             # Set the sample question to be processed
             st.session_state['sample_question'] = q
-            st.rerun()
+            st.experimental_rerun()
     
     # Add reset button in sidebar
     if st.sidebar.button("Reset Chat"):
@@ -376,7 +376,7 @@ def main():
         st.session_state['pending_followup'] = False
         st.session_state['original_question'] = ""
         st.session_state['followup_context'] = ""
-        st.rerun()
+        st.experimental_rerun()
 
 if __name__ == "__main__":
     main() 
