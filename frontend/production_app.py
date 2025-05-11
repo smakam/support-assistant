@@ -4,6 +4,7 @@ import json
 from typing import Optional
 import uuid
 import os
+from streamlit_app import main
 
 # Constants for production
 API_URL = os.environ.get("API_URL", "https://support-assistant.onrender.com")
@@ -43,9 +44,6 @@ def submit_feedback(query_id: str, feedback_type: str, comment: Optional[str] = 
     )
     return response.json()
 
-# Use same main function as the local app
-from streamlit_app import main
-
 # Custom styles
 st.markdown("""
 <style>
@@ -61,10 +59,6 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
-def main():
-    st.write("Streamlit version:", st.__version__)
-    # ... existing code ...
 
 if __name__ == "__main__":
     main() 
