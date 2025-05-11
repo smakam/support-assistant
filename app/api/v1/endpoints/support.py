@@ -9,6 +9,7 @@ import uuid
 import json
 import os
 from datetime import datetime
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -47,10 +48,10 @@ async def handle_support_query(
         }
         
         # Create feedback directory if it doesn't exist
-        os.makedirs("feedback", exist_ok=True)
+        os.makedirs(settings.FEEDBACK_DIR, exist_ok=True)
         
         # Write feedback_data to a JSON file
-        with open(f"feedback/{query_id}.json", "w") as f:
+        with open(os.path.join(settings.FEEDBACK_DIR, f"{query_id}.json"), "w") as f:
             json.dump(feedback_data, f, indent=2)
         
         return SupportResponse(
@@ -71,11 +72,11 @@ async def submit_feedback(feedback: Feedback):
     """Store user feedback for a specific query."""
     try:
         # Check if the query exists
-        if not os.path.exists(f"feedback/{feedback.query_id}.json"):
-            raise HTTPException(status_code=404, detail="Query not found")
+        if not os.path.exists(os.path.join(settings.FEEDBACK_DIR, f"{feedback.query_id}.json")):
+            raise HTTPException(status_code=404, detail="Query not found for feedback")
         
         # Read the existing query data
-        with open(f"feedback/{feedback.query_id}.json", "r") as f:
+        with open(os.path.join(settings.FEEDBACK_DIR, f"{feedback.query_id}.json"), "r") as f:
             query_data = json.load(f)
         
         # Add the feedback to the data
@@ -86,7 +87,7 @@ async def submit_feedback(feedback: Feedback):
         }
         
         # Write the updated data back to the file
-        with open(f"feedback/{feedback.query_id}.json", "w") as f:
+        with open(os.path.join(settings.FEEDBACK_DIR, f"{feedback.query_id}.json"), "w") as f:
             json.dump(query_data, f, indent=2)
         
         return {"status": "success", "message": "Feedback recorded successfully"}

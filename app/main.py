@@ -20,7 +20,7 @@ if settings.BACKEND_CORS_ORIGINS:
     )
 
 # Create feedback directory if it doesn't exist
-os.makedirs("feedback", exist_ok=True)
+os.makedirs(settings.FEEDBACK_DIR, exist_ok=True)
 
 # Include API router
 app.include_router(api_router, prefix=settings.API_V1_PREFIX)
