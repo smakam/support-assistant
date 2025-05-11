@@ -29,4 +29,7 @@ requests==2.31.0
 uuid==1.30
 tenacity==8.2.3  # For API call retries
 urllib3==2.0.4
-certifi==2023.7.22 
+certifi==2023.7.22
+
+# Additional dependencies
+faiss-cpu 
