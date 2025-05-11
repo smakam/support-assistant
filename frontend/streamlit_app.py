@@ -36,6 +36,8 @@ def submit_feedback(query_id: str, feedback_type: str, comment: Optional[str] = 
     return response.json()
 
 def main():
+    import streamlit as st
+    st.write("Streamlit version:", st.__version__)
     st.title("KGen AI Support Assistant")
     st.write("Ask any question about game mechanics, player stats, or clan information!")
 

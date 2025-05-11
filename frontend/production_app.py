@@ -62,5 +62,9 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+def main():
+    st.write("Streamlit version:", st.__version__)
+    # ... existing code ...
+
 if __name__ == "__main__":
     main() 
