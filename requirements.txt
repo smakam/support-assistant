@@ -17,7 +17,7 @@ passlib==1.7.4
 python-multipart==0.0.6
 
 # AI/ML
-openai==0.28.0
+openai==1.10.0
 langchain==0.0.292
 langchain-community==0.0.10
 langchain-openai==0.0.3
