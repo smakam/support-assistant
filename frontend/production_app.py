@@ -7,7 +7,7 @@ import os
 from streamlit_app import main
 
 # Constants for production
-API_URL = os.environ.get("API_URL", "https://support-assistant.onrender.com")
+API_URL = os.environ.get("API_URL", "https://support-assistant.onrender.com/api/v1")
 DEMO_TOKEN = os.environ.get("DEMO_TOKEN", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkZW1vX3VzZXIiLCJyb2xlIjoiZ2FtZXIifQ.8qPWSSvIY7TfRjd0pc-oYKbpodM6wPVSbI_O_Y9jD20")
 
 # Configure page
