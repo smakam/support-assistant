@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     USE_SQLITE: Optional[str] = None
 
     # Vector Store
-    VECTOR_STORE_PATH: str = "vector_store"
+    VECTOR_STORE_PATH: str = "/tmp/vector_store"
     KNOWLEDGE_BASE_PATH: str = "advanced_knowledge_base.txt"
 
     # Environment
