@@ -7,7 +7,7 @@ import os
 
 # Constants
 API_URL = os.environ.get("API_URL", "http://localhost:8000/api/v1")
-DEMO_TOKEN = os.environ.get("DEMO_TOKEN", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkZW1vX3VzZXIiLCJyb2xlIjoiZ2FtZXIifQ.FxNR_1qX77eczBuigdDESqWq56TqA-E3ybSHw-7PfRA")
+DEMO_TOKEN = os.environ.get("DEMO_TOKEN", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkZW1vX3VzZXIiLCJyb2xlIjoiZ2FtZXIifQ.8qPWSSvIY7TfRjd0pc-oYKbpodM6wPVSbI_O_Y9jD20")
 
 def get_support_response(query: str) -> dict:
     """Send query to support API and return response"""

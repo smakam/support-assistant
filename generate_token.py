@@ -1,7 +1,11 @@
 from jose import jwt
+import secrets
 
-SECRET_KEY = "Qw1p8zX7vL2k9sT4bN6m3cR5yU0eJ2hV8fG4dS1aP7oW6lQ3"
+# Generate a new secure random secret key
+SECRET_KEY = secrets.token_urlsafe(32)
 ALGORITHM = "HS256"
+
+print(f"New SECRET_KEY: {SECRET_KEY}")
 
 data = {
     "sub": "demo_user",
@@ -9,4 +13,4 @@ data = {
 }
 
 token = jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
-print(token)
+print(f"New token: {token}")
