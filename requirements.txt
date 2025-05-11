@@ -1,9 +1,11 @@
 # Core dependencies
 fastapi==0.103.1
-pydantic==2.3.0
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
 uvicorn==0.23.2
 python-dotenv==1.0.0
 streamlit==1.26.0
+pyyaml>=6.0
 
 # Database
 sqlalchemy>=1.4.42,<1.5
@@ -17,10 +19,10 @@ passlib==1.7.4
 python-multipart==0.0.6
 
 # AI/ML
-openai==1.10.0
-langchain==0.0.292
-langchain-community==0.0.10
-langchain-openai==0.0.3
+openai>=1.0.0,<2.0.0
+langchain>=0.1.80
+langchain-community>=0.0.30
+langchain-openai>=0.1.0
 
 # Utils
 requests==2.31.0
