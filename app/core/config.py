@@ -35,7 +35,7 @@ class Settings(BaseSettings):
 
     # Vector Store
     VECTOR_STORE_PATH: str = "vector_store"
-    KNOWLEDGE_BASE_PATH: str = "knowledge_base.txt"
+    KNOWLEDGE_BASE_PATH: str = "advanced_knowledge_base.txt"
 
     # Environment
     ENVIRONMENT: str = "development"
