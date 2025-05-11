@@ -53,7 +53,7 @@ class Settings(BaseSettings):
         return self.DATABASE_URL
 
     # Feedback storage
-    FEEDBACK_DIR: str = "feedback"
+    FEEDBACK_DIR: str = os.environ.get("FEEDBACK_DIR", "/tmp/feedback")
 
     # Production URLs
     PRODUCTION_API_URL: str = "https://your-production-api.render.com"
