@@ -5,6 +5,9 @@ from typing import Optional
 import uuid
 import os
 from streamlit_app import main
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 # Constants for production
 API_URL = os.environ.get("API_URL", "https://support-assistant.onrender.com/api/v1")
@@ -24,12 +27,20 @@ def get_support_response(query: str) -> dict:
         "Authorization": f"Bearer {DEMO_TOKEN}",
         "Content-Type": "application/json"
     }
+    url = f"{API_URL}/support/query"
+    logging.info(f"Requesting: {url} with headers={headers} and data={{'text': query}}")
     response = requests.post(
-        f"{API_URL}/support/query",
+        url,
         headers=headers,
         json={"text": query}
     )
-    return response.json()
+    logging.info(f"Response status: {response.status_code}, text: {response.text}")
+    try:
+        return response.json()
+    except Exception as e:
+        st.error(f"API error: {e}\nRaw response: {response.text}")
+        logging.error(f"API error: {e}\nRaw response: {response.text}")
+        return {}
 
 def submit_feedback(query_id: str, feedback_type: str, comment: Optional[str] = None) -> dict:
     """Submit feedback for a query response"""
@@ -37,12 +48,20 @@ def submit_feedback(query_id: str, feedback_type: str, comment: Optional[str] = 
         "Authorization": f"Bearer {DEMO_TOKEN}",
         "Content-Type": "application/json"
     }
+    url = f"{API_URL}/feedback"
+    logging.info(f"Submitting feedback: {url} with headers={headers} and data={{'query_id': query_id, 'feedback_type': feedback_type, 'comment': comment}}")
     response = requests.post(
-        f"{API_URL}/feedback",
+        url,
         headers=headers,
         json={"query_id": query_id, "feedback_type": feedback_type, "comment": comment}
     )
-    return response.json()
+    logging.info(f"Feedback response status: {response.status_code}, text: {response.text}")
+    try:
+        return response.json()
+    except Exception as e:
+        st.error(f"API error: {e}\nRaw response: {response.text}")
+        logging.error(f"API error: {e}\nRaw response: {response.text}")
+        return {}
 
 # Custom styles
 st.markdown("""

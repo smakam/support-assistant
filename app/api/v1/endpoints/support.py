@@ -10,8 +10,10 @@ import json
 import os
 from datetime import datetime
 from app.core.config import settings
+import logging
 
 router = APIRouter()
+logger = logging.getLogger("uvicorn.error")
 
 @router.post("/query", response_model=SupportResponse)
 async def handle_support_query(
@@ -22,6 +24,7 @@ async def handle_support_query(
     Handle a support query from a user.
     The query will be routed to appropriate agents based on its content.
     """
+    logger.info(f"Received support query: {query.text} from user: {current_user.username}")
     try:
         response = await query_router.route_query(
             query.text,
@@ -54,6 +57,7 @@ async def handle_support_query(
         with open(os.path.join(settings.FEEDBACK_DIR, f"{query_id}.json"), "w") as f:
             json.dump(feedback_data, f, indent=2)
         
+        logger.info(f"Query response: {response.answer}, query_id: {query_id}")
         return SupportResponse(
             query_id=query_id,
             answer=response.answer,
@@ -62,6 +66,7 @@ async def handle_support_query(
             ticket_id=response.ticket_id
         )
     except Exception as e:
+        logger.error(f"Error processing query: {e}")
         raise HTTPException(
             status_code=500,
             detail=f"Error processing query: {str(e)}"
@@ -70,6 +75,7 @@ async def handle_support_query(
 @router.post("/feedback", status_code=201)
 async def submit_feedback(feedback: Feedback):
     """Store user feedback for a specific query."""
+    logger.info(f"Received feedback for query_id: {feedback.query_id}, type: {feedback.feedback_type}, comment: {feedback.comment}")
     try:
         # Check if the query exists
         if not os.path.exists(os.path.join(settings.FEEDBACK_DIR, f"{feedback.query_id}.json")):
@@ -90,6 +96,8 @@ async def submit_feedback(feedback: Feedback):
         with open(os.path.join(settings.FEEDBACK_DIR, f"{feedback.query_id}.json"), "w") as f:
             json.dump(query_data, f, indent=2)
         
+        logger.info(f"Feedback recorded for query_id: {feedback.query_id}")
         return {"status": "success", "message": "Feedback recorded successfully"}
     except Exception as e:
+        logger.error(f"Error recording feedback: {e}")
         raise HTTPException(status_code=500, detail=f"Error recording feedback: {str(e)}") 
