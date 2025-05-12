@@ -4,10 +4,17 @@ import json
 from typing import Optional
 import uuid
 import os
+import logging
 
 # Constants
 API_URL = os.environ.get("API_URL", "http://localhost:8000/api/v1")
 DEMO_TOKEN = os.environ.get("DEMO_TOKEN", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkZW1vX3VzZXIiLCJyb2xlIjoiZ2FtZXIifQ.8qPWSSvIY7TfRjd0pc-oYKbpodM6wPVSbI_O_Y9jD20")
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 def get_support_response(query: str) -> dict:
     """Send query to support API and return response"""
@@ -15,12 +22,19 @@ def get_support_response(query: str) -> dict:
         "Authorization": f"Bearer {DEMO_TOKEN}",
         "Content-Type": "application/json"
     }
-    response = requests.post(
-        f"{API_URL}/support/query",
-        headers=headers,
-        json={"text": query}
-    )
-    return response.json()
+    url = f"{API_URL}/support/query"
+    logger.info(f"Requesting: {url} with headers={headers} and data={{'text': query}}")
+    try:
+        response = requests.post(
+            url,
+            headers=headers,
+            json={"text": query}
+        )
+        logger.info(f"Response status: {response.status_code}, text: {response.text}")
+        return response.json()
+    except Exception as e:
+        logger.error(f"API error: {e}")
+        return {}
 
 def submit_feedback(query_id: str, feedback_type: str, comment: Optional[str] = None) -> dict:
     """Submit feedback for a query response"""
@@ -28,14 +42,22 @@ def submit_feedback(query_id: str, feedback_type: str, comment: Optional[str] = 
         "Authorization": f"Bearer {DEMO_TOKEN}",
         "Content-Type": "application/json"
     }
-    response = requests.post(
-        f"{API_URL}/feedback",
-        headers=headers,
-        json={"query_id": query_id, "feedback_type": feedback_type, "comment": comment}
-    )
-    return response.json()
+    url = f"{API_URL}/feedback"
+    logger.info(f"Submitting feedback: {url} with headers={headers} and data={{'query_id': query_id, 'feedback_type': feedback_type, 'comment': comment}}")
+    try:
+        response = requests.post(
+            url,
+            headers=headers,
+            json={"query_id": query_id, "feedback_type": feedback_type, "comment": comment}
+        )
+        logger.info(f"Feedback response status: {response.status_code}, text: {response.text}")
+        return response.json()
+    except Exception as e:
+        logger.error(f"API error: {e}")
+        return {}
 
 def main():
+    logger.info("Streamlit app started")
     st.title("KGen AI Support Assistant")
     st.write("Ask any question about game mechanics, player stats, or clan information!")
 
@@ -127,6 +149,7 @@ def main():
         st.session_state['sample_question'] = None
     
     if query:
+        logger.info(f"User submitted query: {query}")
         # Only add user query to history if it wasn't added by the sample question button
         # Check if the last message is not already this query
         should_add_to_history = True
@@ -195,6 +218,7 @@ def main():
             try:
                 # Call API
                 response = get_support_response(api_query)
+                logger.info(f"API response: {response}")
                 
                 # Display assistant response
                 with st.chat_message("assistant", avatar="🤖"):
@@ -275,6 +299,7 @@ def main():
                 st.experimental_rerun()
                     
             except Exception as e:
+                logger.error(f"Error in main response handling: {e}")
                 st.error(f"Error: {str(e)}")
 
     # Sample questions in sidebar
