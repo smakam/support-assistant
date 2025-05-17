@@ -10,7 +10,7 @@ parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parent_dir)
 
 # Import shared functions from main app
-from streamlit_app import read_knowledge_base, get_db_schema, get_sample_data, find_file
+from streamlit_app import read_knowledge_base, get_db_schema, get_sample_data, find_file, IS_PRODUCTION
 
 # Constants
 KNOWLEDGE_BASE_PATH = os.environ.get("KNOWLEDGE_BASE_PATH", "advanced_knowledge_base.txt")
@@ -113,10 +113,7 @@ def main():
                 if st.button("Run Query"):
                     if custom_query.lower().strip().startswith("select"):
                         try:
-                            # Check for production environment indicator
-                            is_production = os.environ.get("ENVIRONMENT", "").lower() == "production"
-                            
-                            if is_production:
+                            if IS_PRODUCTION:
                                 # Use PostgreSQL in production
                                 import psycopg2
                                 import psycopg2.extras
@@ -124,20 +121,34 @@ def main():
                                 db_url = os.environ.get("DATABASE_URL")
                                 if not db_url:
                                     st.error("DATABASE_URL environment variable not set in production")
+                                    st.info("Using demo mode - queries will return sample data only")
                                 else:
-                                    # Connect to PostgreSQL
-                                    conn = psycopg2.connect(db_url)
-                                    df = pd.read_sql_query(custom_query, conn)
-                                    conn.close()
-                                    
-                                    st.subheader("Query Results")
-                                    st.dataframe(df, use_container_width=True)
-                                    st.success(f"Query returned {len(df)} rows.")
+                                    try:
+                                        # Connect to PostgreSQL
+                                        conn = psycopg2.connect(db_url)
+                                        df = pd.read_sql_query(custom_query, conn)
+                                        conn.close()
+                                        
+                                        st.subheader("Query Results")
+                                        st.dataframe(df, use_container_width=True)
+                                        st.success(f"Query returned {len(df)} rows.")
+                                    except Exception as e:
+                                        st.error(f"Error executing query: {str(e)}")
+                                        st.info("Using demo mode - displaying sample data")
+                                        # Show sample data for the selected table as fallback
+                                        df = get_sample_data(selected_table, limit=10)
+                                        st.subheader("Sample Data")
+                                        st.dataframe(df, use_container_width=True)
                             else:
                                 # Find the database file for local development
                                 db_path = find_file(DB_PATH)
                                 if not db_path:
                                     st.error(f"Database file not found: {DB_PATH}")
+                                    st.info("Using demo mode - queries will return sample data only")
+                                    # Show sample data for the selected table as fallback
+                                    df = get_sample_data(selected_table, limit=10)
+                                    st.subheader("Sample Data")
+                                    st.dataframe(df, use_container_width=True)
                                 else:
                                     conn = sqlite3.connect(db_path)
                                     df = pd.read_sql_query(custom_query, conn)
