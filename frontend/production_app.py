@@ -4,22 +4,23 @@ import json
 from typing import Optional
 import uuid
 import os
-from streamlit_app import main
 import logging
 
+# Set up logging first
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Constants for production
 API_URL = os.environ.get("API_URL", "https://support-assistant.onrender.com/api/v1")
 DEMO_TOKEN = os.environ.get("DEMO_TOKEN", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkZW1vX3VzZXIiLCJyb2xlIjoiZ2FtZXIifQ.8qPWSSvIY7TfRjd0pc-oYKbpodM6wPVSbI_O_Y9jD20")
 
-# Configure page
-st.set_page_config(
-    page_title="KGen AI Support Assistant",
-    page_icon="🤖",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+# Set environment variables that will be detected by streamlit_app.py
+os.environ["RENDER"] = "true"
+os.environ["API_URL"] = API_URL
+logger.info("Production environment detected, setting variables for streamlit_app.py")
+
+# Import main function from streamlit_app after setting environment variables
+from streamlit_app import main
 
 def get_support_response(query: str, conversation_history=None) -> dict:
     """Send query to support API and return response"""

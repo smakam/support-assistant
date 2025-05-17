@@ -12,6 +12,13 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
 
+# Set up logging first
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s"
+)
+logger = logging.getLogger(__name__)
+
 # Constants
 API_URL = os.environ.get("API_URL", "http://localhost:8000/api/v1")
 DEMO_TOKEN = os.environ.get("DEMO_TOKEN", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkZW1vX3VzZXIiLCJyb2xlIjoiZ2FtZXIifQ.8qPWSSvIY7TfRjd0pc-oYKbpodM6wPVSbI_O_Y9jD20")
@@ -25,12 +32,6 @@ IS_RENDER = os.environ.get("RENDER", "").lower() == "true"
 if IS_RENDER and not IS_PRODUCTION:
     IS_PRODUCTION = True
     logger.info("Detected Render.com environment, setting production mode automatically")
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(message)s"
-)
-logger = logging.getLogger(__name__)
 
 # Set page config for main page
 st.set_page_config(
