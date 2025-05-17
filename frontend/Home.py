@@ -11,392 +11,26 @@ import io
 from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
+import sys
 
-# Constants
-API_URL = os.environ.get("API_URL", "http://localhost:8000/api/v1")
-DEMO_TOKEN = os.environ.get("DEMO_TOKEN", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkZW1vX3VzZXIiLCJyb2xlIjoiZ2FtZXIifQ.8qPWSSvIY7TfRjd0pc-oYKbpodM6wPVSbI_O_Y9jD20")
-KNOWLEDGE_BASE_PATH = os.environ.get("KNOWLEDGE_BASE_PATH", "advanced_knowledge_base.txt")
-DB_PATH = os.environ.get("DB_PATH", "kgen_gaming_support_advanced.db")
+# Add current directory to path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(current_dir)
 
+# Import from our streamlit_app.py file
+from streamlit_app import (
+    get_support_response, submit_feedback, process_sample_question, 
+    ensure_trace_continuity, create_system_diagram, 
+    read_knowledge_base, get_db_schema, get_sample_data, find_file,
+    API_URL, DEMO_TOKEN
+)
+
+# Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(message)s"
 )
 logger = logging.getLogger(__name__)
-
-# Set page config for main page
-st.set_page_config(
-    page_title="KGen AI Support Assistant",
-    page_icon="🤖",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-# Function to find file in current or parent directory
-def find_file(filename):
-    """Find a file in the current directory or parent directory"""
-    # Try current directory
-    if os.path.exists(filename):
-        return os.path.abspath(filename)
-    
-    # Try relative to script location
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(script_dir, filename)
-    if os.path.exists(file_path):
-        return file_path
-    
-    # Try one level up
-    parent_dir = os.path.dirname(script_dir)
-    file_path = os.path.join(parent_dir, filename)
-    if os.path.exists(file_path):
-        return file_path
-    
-    # Try two levels up
-    grandparent_dir = os.path.dirname(parent_dir)
-    file_path = os.path.join(grandparent_dir, filename)
-    if os.path.exists(file_path):
-        return file_path
-    
-    return None
-
-# Function to read knowledge base content
-def read_knowledge_base():
-    try:
-        # Find the knowledge base file
-        kb_path = find_file(KNOWLEDGE_BASE_PATH)
-        if kb_path:
-            logger.info(f"Found knowledge base at: {kb_path}")
-            with open(kb_path, 'r') as f:
-                return f.read()
-        else:
-            logger.error(f"Knowledge base file not found: {KNOWLEDGE_BASE_PATH}")
-            return f"Knowledge base file not found: {KNOWLEDGE_BASE_PATH}"
-    except Exception as e:
-        logger.error(f"Error reading knowledge base: {str(e)}")
-        return f"Error reading knowledge base: {str(e)}"
-
-# Function to get SQL database structure
-def get_db_schema():
-    try:
-        # Find the database file
-        db_path = find_file(DB_PATH)
-        if not db_path:
-            logger.error(f"Database file not found: {DB_PATH}")
-            return f"Database file not found: {DB_PATH}"
-        
-        logger.info(f"Found database at: {db_path}")
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-        
-        # Get list of tables
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-        tables = cursor.fetchall()
-        
-        schema = {}
-        for table in tables:
-            table_name = table[0]
-            cursor.execute(f"PRAGMA table_info({table_name});")
-            columns = cursor.fetchall()
-            schema[table_name] = [{"name": col[1], "type": col[2]} for col in columns]
-        
-        conn.close()
-        return schema
-    except Exception as e:
-        logger.error(f"Error reading database schema: {str(e)}")
-        return f"Error reading database schema: {str(e)}"
-
-# Function to get sample data from tables
-def get_sample_data(table_name, limit=5):
-    try:
-        # Find the database file
-        db_path = find_file(DB_PATH)
-        if not db_path:
-            logger.error(f"Database file not found: {DB_PATH}")
-            return pd.DataFrame({"Error": [f"Database file not found: {DB_PATH}"]})
-        
-        conn = sqlite3.connect(db_path)
-        query = f"SELECT * FROM {table_name} LIMIT {limit}"
-        df = pd.read_sql_query(query, conn)
-        conn.close()
-        return df
-    except Exception as e:
-        logger.error(f"Error fetching sample data: {str(e)}")
-        return pd.DataFrame({"Error": [str(e)]})
-
-# Function to create system architecture diagram
-def create_system_diagram():
-    fig, ax = plt.subplots(figsize=(10, 6))
-    
-    # Hide axes
-    ax.axis('off')
-    
-    # Define component positions
-    components = {
-        "User Interface": (0.5, 0.9),
-        "Router": (0.5, 0.7),
-        "StaticKnowledgeAgent": (0.2, 0.5),
-        "DynamicDataAgent": (0.5, 0.5),
-        "HybridAgent": (0.8, 0.5),
-        "Knowledge Base": (0.2, 0.3),
-        "SQL Database": (0.5, 0.3),
-        "JIRA": (0.8, 0.3),
-        "LangSmith": (0.5, 0.1)
-    }
-    
-    # Draw boxes
-    for component, (x, y) in components.items():
-        color = "skyblue"
-        if "Agent" in component:
-            color = "lightgreen"
-        elif "Base" in component or "Database" in component:
-            color = "wheat"
-        elif component in ["JIRA", "LangSmith"]:
-            color = "lightcoral"
-            
-        ax.add_patch(plt.Rectangle((x-0.1, y-0.04), 0.2, 0.08, fill=True, 
-                                  alpha=0.7, color=color, transform=ax.transAxes))
-        ax.text(x, y, component, ha='center', va='center', fontsize=10, transform=ax.transAxes)
-    
-    # Draw arrows
-    ax.arrow(0.5, 0.86, 0, -0.1, head_width=0.01, head_length=0.02, fc='black', ec='black', transform=ax.transAxes)
-    
-    # Router to agents
-    ax.arrow(0.5, 0.66, -0.25, -0.1, head_width=0.01, head_length=0.02, fc='black', ec='black', transform=ax.transAxes)
-    ax.arrow(0.5, 0.66, 0, -0.1, head_width=0.01, head_length=0.02, fc='black', ec='black', transform=ax.transAxes)
-    ax.arrow(0.5, 0.66, 0.25, -0.1, head_width=0.01, head_length=0.02, fc='black', ec='black', transform=ax.transAxes)
-    
-    # Agents to data sources
-    ax.arrow(0.2, 0.46, 0, -0.09, head_width=0.01, head_length=0.02, fc='black', ec='black', transform=ax.transAxes)
-    ax.arrow(0.5, 0.46, 0, -0.09, head_width=0.01, head_length=0.02, fc='black', ec='black', transform=ax.transAxes)
-    
-    # HybridAgent to both knowledge base and SQL
-    ax.arrow(0.8, 0.46, -0.5, -0.09, head_width=0.01, head_length=0.02, fc='black', ec='black', transform=ax.transAxes, linestyle='dotted')
-    ax.arrow(0.8, 0.46, -0.25, -0.09, head_width=0.01, head_length=0.02, fc='black', ec='black', transform=ax.transAxes, linestyle='dotted')
-    
-    # Router to JIRA for escalation cases 
-    ax.arrow(0.5, 0.66, 0.3, -0.3, head_width=0.01, head_length=0.02, fc='black', ec='black', transform=ax.transAxes, linestyle='dashed', color='red')
-    
-    # Tracing to LangSmith
-    ax.arrow(0.3, 0.5, 0.15, -0.35, head_width=0.01, head_length=0.02, fc='black', ec='black', transform=ax.transAxes, linestyle='dashed')
-    ax.arrow(0.5, 0.5, 0, -0.35, head_width=0.01, head_length=0.02, fc='black', ec='black', transform=ax.transAxes, linestyle='dashed')
-    ax.arrow(0.7, 0.5, -0.15, -0.35, head_width=0.01, head_length=0.02, fc='black', ec='black', transform=ax.transAxes, linestyle='dashed')
-    
-    # Titles and legend
-    plt.title("KGen AI Support Assistant - System Architecture", fontsize=14)
-    
-    legend_elements = [
-        plt.Rectangle((0, 0), 1, 1, color="skyblue", alpha=0.7, label="Interface Components"),
-        plt.Rectangle((0, 0), 1, 1, color="lightgreen", alpha=0.7, label="Agent Components"),
-        plt.Rectangle((0, 0), 1, 1, color="wheat", alpha=0.7, label="Data Sources"),
-        plt.Rectangle((0, 0), 1, 1, color="lightcoral", alpha=0.7, label="External Services"),
-        plt.Line2D([0], [0], color='red', lw=2, linestyle='dashed', label='Escalation Flow'),
-        plt.Line2D([0], [0], color='black', lw=2, linestyle='dotted', label='Hybrid Queries'),
-    ]
-    ax.legend(handles=legend_elements, loc='upper center', bbox_to_anchor=(0.5, 0), ncol=2)
-    
-    plt.tight_layout()
-    
-    # Convert plot to image
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png', dpi=100)
-    buf.seek(0)
-    img = Image.open(buf)
-    return img
-
-def get_support_response(query: str, conversation_history=None) -> dict:
-    """Send query to support API and return response"""
-    headers = {
-        "Authorization": f"Bearer {DEMO_TOKEN}",
-        "Content-Type": "application/json"
-    }
-    url = f"{API_URL}/support/query"
-    
-    # Prepare the request payload
-    payload = {"text": query}
-    
-    # Check for all escalation phrases, matching the backend logic
-    escalation_phrases = [
-        "speak to a human", "talk to a human", "need a human", "contact support", 
-        "escalate", "support ticket", "create a ticket", "speak to an agent",
-        "talk to support", "need help from a person", "human support"
-    ]
-    is_escalation = query.lower().startswith("escalate:") or any(phrase in query.lower() for phrase in escalation_phrases)
-    
-    # Add conversation history if provided (for all requests, not just escalations)
-    if conversation_history:
-        # Format conversation history according to the expected schema
-        formatted_history = []
-        for msg in conversation_history:
-            if isinstance(msg, dict) and 'type' in msg and 'content' in msg:
-                # Include metadata if available for trace continuity
-                msg_data = {
-                    "type": msg["type"],
-                    "content": msg["content"]
-                }
-                # Preserve metadata for trace continuity
-                if 'metadata' in msg and msg['metadata']:
-                    msg_data["metadata"] = msg['metadata']
-                formatted_history.append(msg_data)
-        
-        payload["conversation_history"] = formatted_history
-        logger.info(f"Sending {len(formatted_history)} conversation messages in API request")
-        logger.info(f"Conversation history includes trace metadata: {any('metadata' in msg for msg in formatted_history)}")
-    
-    logger.info(f"Requesting: {url} with headers={headers} and data={payload}")
-    try:
-        response = requests.post(
-            url,
-            headers=headers,
-            json=payload
-        )
-        logger.info(f"Response status: {response.status_code}, text: {response.text}")
-        return response.json()
-    except Exception as e:
-        logger.error(f"API error: {e}")
-        return {}
-
-def submit_feedback(query_id: str, feedback_type: str, comment: Optional[str] = None) -> dict:
-    """Submit feedback for a query response"""
-    headers = {
-        "Authorization": f"Bearer {DEMO_TOKEN}",
-        "Content-Type": "application/json"
-    }
-    url = f"{API_URL}/feedback"
-    logger.info(f"Submitting feedback: {url} with headers={headers} and data={{'query_id': query_id, 'feedback_type': feedback_type, 'comment': comment}}")
-    try:
-        response = requests.post(
-            url,
-            headers=headers,
-            json={"query_id": query_id, "feedback_type": feedback_type, "comment": comment}
-        )
-        logger.info(f"Feedback response status: {response.status_code}, text: {response.text}")
-        return response.json()
-    except Exception as e:
-        logger.error(f"API error: {e}")
-        return {}
-
-def process_sample_question():
-    """Process sample question selected from sidebar"""
-    if st.session_state.get('sample_question'):
-        # Get the selected question
-        question = st.session_state['sample_question']
-        logger.info(f"Processing sample question: {question}")
-        
-        # Add the question to the message history as a user message
-        st.session_state['messages'].append({
-            'type': 'user',
-            'content': question
-        })
-        
-        # Use the utility function for trace continuity
-        conversation_history = ensure_trace_continuity(
-            st.session_state['messages'][:-1],  # Exclude the sample question we just added
-            current_message=question
-        )
-        
-        if conversation_history:
-            logger.info(f"Including {len(conversation_history)} messages for sample question trace continuity")
-        
-        # Get API response with conversation history
-        response = get_support_response(question, conversation_history=conversation_history)
-        
-        # Extract metadata from response for trace continuity
-        metadata = response.get('metadata', {})
-        
-        # Check if follow-up is needed
-        if response.get('follow_up_question'):
-            # Store info for follow-up handling
-            st.session_state['pending_followup'] = True
-            st.session_state['followup_question'] = response.get('follow_up_question')
-            st.session_state['original_question'] = question
-            
-            # Try to detect what information is being asked for in the follow-up
-            follow_up_lower = response.get('follow_up_question', '').lower()
-            if 'clan name' in follow_up_lower:
-                st.session_state['followup_context'] = 'clan name'
-            elif 'player name' in follow_up_lower:
-                st.session_state['followup_context'] = 'player name'
-            elif 'region' in follow_up_lower:
-                st.session_state['followup_context'] = 'region'
-            
-            # Add the follow-up question as a system message
-            st.session_state['messages'].append({
-                'type': 'followup',
-                'content': response.get('follow_up_question'),
-                'metadata': metadata  # Store metadata for trace continuity
-            })
-        else:
-            # Add the response as an assistant message
-            st.session_state['messages'].append({
-                'type': 'assistant',
-                'content': response.get('answer', 'I encountered an error processing your request.'),
-                'source_type': response.get('source_type', 'STATIC'),
-                'follow_up_question': response.get('follow_up_question'),
-                'query_id': response.get('query_id', str(uuid.uuid4())),
-                'ticket_id': response.get('ticket_id'),
-                'metadata': metadata  # Store metadata for trace continuity
-            })
-            
-            # Debug log to check metadata
-            if 'run_id' in metadata:
-                logger.info(f"Stored response with run_id: {metadata['run_id']} for trace continuity")
-            else:
-                logger.warning("Response has no run_id in metadata!")
-        
-        # Reset sample question
-        st.session_state['sample_question'] = None
-
-def ensure_trace_continuity(messages, current_message):
-    """
-    Utility function to prepare conversation history with proper trace metadata
-    for maintaining continuity in LangSmith traces.
-    
-    Args:
-        messages: List of message objects from session state
-        current_message: Current message being processed (to exclude from history)
-        
-    Returns:
-        List of properly formatted conversation messages with metadata
-    """
-    conversation_history = []
-    for msg in messages:
-        # Skip the current message if it matches
-        if current_message and msg.get('content') == current_message:
-            continue
-            
-        # Skip messages with invalid types
-        msg_type = msg.get('type')
-        if msg_type not in ["assistant", "user", "followup", "system"]:
-            continue
-        
-        # Create message with content and proper type
-        msg_data = {
-            "type": msg_type,
-            "content": msg.get('content', '')
-        }
-        
-        # Build comprehensive metadata
-        metadata = {}
-        
-        # Include existing metadata
-        if 'metadata' in msg and msg['metadata']:
-            metadata.update(msg['metadata'])
-        
-        # Include query_id for trace linking
-        if 'query_id' in msg:
-            metadata['query_id'] = msg['query_id']
-            
-        # Include any other relevant fields for tracing
-        if 'source_type' in msg:
-            metadata['source_type'] = msg['source_type']
-            
-        # Only add metadata if we have any
-        if metadata:
-            msg_data["metadata"] = metadata
-            
-        conversation_history.append(msg_data)
-        
-    return conversation_history
 
 def main():
     logger.info("Streamlit app started")
@@ -404,6 +38,21 @@ def main():
     # Regular chat UI
     st.title("KGen AI Support Assistant")
     st.write("Ask any question about game mechanics, player stats, or clan information!")
+
+    # Add brief info about what the app does
+    with st.expander("About this demo"):
+        st.markdown("""
+        This demo showcases an AI-powered customer support assistant for a fictional gaming platform. 
+        
+        - Ask questions about game mechanics, policies, or player/clan data
+        - The system will route your query to the appropriate specialized agent
+        - For more details on how it works, see the **System Help** page
+        - To explore available data, check the **Data Explorer** page
+        """)
+        
+        col1, col2 = st.columns(2)
+        col1.markdown("[📚 System Architecture](pages/1_System_Help.py)")
+        col2.markdown("[📊 Data Explorer](pages/2_Data_Explorer.py)")
 
     # Initialize session state for message history
     if 'messages' not in st.session_state:
@@ -758,8 +407,17 @@ def main():
             if st.sidebar.button(q, key=f"escalation_{q}"):
                 st.session_state['sample_question'] = q
                 st.experimental_rerun()
+                
+        # Navigation links
+        st.sidebar.markdown("---")
+        st.sidebar.markdown("### Navigation")
+        
+        st.sidebar.markdown("[💬 Chat Assistant](Home.py)")
+        st.sidebar.markdown("[📚 System Architecture](pages/1_System_Help.py)")
+        st.sidebar.markdown("[📊 Data Explorer](pages/2_Data_Explorer.py)")
         
         # Clear chat
+        st.sidebar.markdown("---")
         if st.sidebar.button("Clear Chat", type="primary"):
             st.session_state['messages'] = []
             st.session_state['pending_followup'] = False
