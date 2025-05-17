@@ -4,6 +4,9 @@ requests==2.31.0
 python-dotenv==1.0.0
 matplotlib>=3.7.0
 
+# Database connectivity
+psycopg2-binary==2.9.7  # PostgreSQL driver for production
+
 # Do not include uuid package - it requires compilation
 # Use Python's built-in uuid module instead
 # uuid==1.30
