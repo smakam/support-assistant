@@ -19,6 +19,16 @@ os.environ["RENDER"] = "true"
 os.environ["API_URL"] = API_URL
 logger.info("Production environment detected, setting variables for streamlit_app.py")
 
+# Log environment variables for debugging
+logger.info(f"RENDER environment variable: {os.environ.get('RENDER')}")
+logger.info(f"API_URL environment variable: {os.environ.get('API_URL')}")
+logger.info(f"DATABASE_URL exists: {os.environ.get('DATABASE_URL') is not None}")
+if os.environ.get('DATABASE_URL'):
+    # Don't log the full connection string for security, just the beginning part
+    db_url = os.environ.get('DATABASE_URL')
+    masked_url = db_url[:15] + "..." if len(db_url) > 15 else db_url
+    logger.info(f"DATABASE_URL starts with: {masked_url}")
+
 # Import main function from streamlit_app after setting environment variables
 from streamlit_app import main
 

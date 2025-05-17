@@ -33,6 +33,14 @@ if IS_RENDER and not IS_PRODUCTION:
     IS_PRODUCTION = True
     logger.info("Detected Render.com environment, setting production mode automatically")
 
+# Check for PostgreSQL library availability
+if IS_PRODUCTION:
+    try:
+        import psycopg2
+        logger.info("PostgreSQL library (psycopg2) is available")
+    except ImportError:
+        logger.error("PostgreSQL library (psycopg2) is NOT available - database functionality will be limited")
+
 # Set page config for main page
 st.set_page_config(
     page_title="KGen AI Support Assistant",
@@ -152,18 +160,20 @@ def get_db_schema():
         # Use the global production flag
         if IS_PRODUCTION:
             # Use PostgreSQL in production
-            import psycopg2
             from psycopg2 import sql
             
             db_url = os.environ.get("DATABASE_URL")
+            logger.info(f"Production mode detected, DATABASE_URL exists: {db_url is not None}")
             if not db_url:
                 logger.error("DATABASE_URL environment variable not set in production")
                 return get_fallback_schema()
                 
             try:
                 # Connect to PostgreSQL
+                logger.info("Attempting to connect to PostgreSQL database...")
                 conn = psycopg2.connect(db_url)
                 cursor = conn.cursor()
+                logger.info("Successfully connected to PostgreSQL database")
                 
                 # Get list of tables in PostgreSQL
                 cursor.execute("""
@@ -171,6 +181,7 @@ def get_db_schema():
                     WHERE table_schema = 'public'
                 """)
                 tables = cursor.fetchall()
+                logger.info(f"Found {len(tables)} tables in PostgreSQL database")
                 
                 schema = {}
                 for table in tables:
