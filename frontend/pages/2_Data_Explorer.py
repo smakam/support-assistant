@@ -66,6 +66,7 @@ def main():
                     st.table(table_df)
                     
                     # Show SQL CREATE TABLE statement
+                    st.subheader("SQL Definition")
                     create_table_sql = f"CREATE TABLE {table_name} (\n"
                     for i, col in enumerate(columns):
                         create_table_sql += f"    {col['name']} {col['type']}"
@@ -74,7 +75,6 @@ def main():
                         create_table_sql += "\n"
                     create_table_sql += ");"
                     
-                    st.subheader("SQL Definition")
                     st.code(create_table_sql, language="sql")
     
     with tabs[2]:
