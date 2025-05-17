@@ -113,18 +113,39 @@ def main():
                 if st.button("Run Query"):
                     if custom_query.lower().strip().startswith("select"):
                         try:
-                            # Find the database file
-                            db_path = find_file(DB_PATH)
-                            if not db_path:
-                                st.error(f"Database file not found: {DB_PATH}")
-                            else:
-                                conn = sqlite3.connect(db_path)
-                                df = pd.read_sql_query(custom_query, conn)
-                                conn.close()
+                            # Check for production environment indicator
+                            is_production = os.environ.get("ENVIRONMENT", "").lower() == "production"
+                            
+                            if is_production:
+                                # Use PostgreSQL in production
+                                import psycopg2
+                                import psycopg2.extras
                                 
-                                st.subheader("Query Results")
-                                st.dataframe(df, use_container_width=True)
-                                st.success(f"Query returned {len(df)} rows.")
+                                db_url = os.environ.get("DATABASE_URL")
+                                if not db_url:
+                                    st.error("DATABASE_URL environment variable not set in production")
+                                else:
+                                    # Connect to PostgreSQL
+                                    conn = psycopg2.connect(db_url)
+                                    df = pd.read_sql_query(custom_query, conn)
+                                    conn.close()
+                                    
+                                    st.subheader("Query Results")
+                                    st.dataframe(df, use_container_width=True)
+                                    st.success(f"Query returned {len(df)} rows.")
+                            else:
+                                # Find the database file for local development
+                                db_path = find_file(DB_PATH)
+                                if not db_path:
+                                    st.error(f"Database file not found: {DB_PATH}")
+                                else:
+                                    conn = sqlite3.connect(db_path)
+                                    df = pd.read_sql_query(custom_query, conn)
+                                    conn.close()
+                                    
+                                    st.subheader("Query Results")
+                                    st.dataframe(df, use_container_width=True)
+                                    st.success(f"Query returned {len(df)} rows.")
                         except Exception as e:
                             st.error(f"Error executing query: {str(e)}")
                     else:

@@ -78,29 +78,68 @@ def read_knowledge_base():
 # Function to get SQL database structure
 def get_db_schema():
     try:
-        # Find the database file
-        db_path = find_file(DB_PATH)
-        if not db_path:
-            logger.error(f"Database file not found: {DB_PATH}")
-            return f"Database file not found: {DB_PATH}"
+        # Check for production environment indicator
+        is_production = os.environ.get("ENVIRONMENT", "").lower() == "production"
         
-        logger.info(f"Found database at: {db_path}")
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-        
-        # Get list of tables
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-        tables = cursor.fetchall()
-        
-        schema = {}
-        for table in tables:
-            table_name = table[0]
-            cursor.execute(f"PRAGMA table_info({table_name});")
-            columns = cursor.fetchall()
-            schema[table_name] = [{"name": col[1], "type": col[2]} for col in columns]
-        
-        conn.close()
-        return schema
+        if is_production:
+            # Use PostgreSQL in production
+            import psycopg2
+            from psycopg2 import sql
+            
+            db_url = os.environ.get("DATABASE_URL")
+            if not db_url:
+                logger.error("DATABASE_URL environment variable not set in production")
+                return "DATABASE_URL environment variable not set in production"
+                
+            # Connect to PostgreSQL
+            conn = psycopg2.connect(db_url)
+            cursor = conn.cursor()
+            
+            # Get list of tables in PostgreSQL
+            cursor.execute("""
+                SELECT table_name FROM information_schema.tables 
+                WHERE table_schema = 'public'
+            """)
+            tables = cursor.fetchall()
+            
+            schema = {}
+            for table in tables:
+                table_name = table[0]
+                # Get column info from PostgreSQL
+                cursor.execute(sql.SQL("""
+                    SELECT column_name, data_type 
+                    FROM information_schema.columns 
+                    WHERE table_name = %s
+                """), [table_name])
+                columns = cursor.fetchall()
+                schema[table_name] = [{"name": col[0], "type": col[1]} for col in columns]
+            
+            conn.close()
+            return schema
+        else:
+            # Use SQLite for local development
+            db_path = find_file(DB_PATH)
+            if not db_path:
+                logger.error(f"Database file not found: {DB_PATH}")
+                return f"Database file not found: {DB_PATH}"
+            
+            logger.info(f"Found database at: {db_path}")
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            
+            # Get list of tables
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+            tables = cursor.fetchall()
+            
+            schema = {}
+            for table in tables:
+                table_name = table[0]
+                cursor.execute(f"PRAGMA table_info({table_name});")
+                columns = cursor.fetchall()
+                schema[table_name] = [{"name": col[1], "type": col[2]} for col in columns]
+            
+            conn.close()
+            return schema
     except Exception as e:
         logger.error(f"Error reading database schema: {str(e)}")
         return f"Error reading database schema: {str(e)}"
@@ -108,17 +147,39 @@ def get_db_schema():
 # Function to get sample data from tables
 def get_sample_data(table_name, limit=5):
     try:
-        # Find the database file
-        db_path = find_file(DB_PATH)
-        if not db_path:
-            logger.error(f"Database file not found: {DB_PATH}")
-            return pd.DataFrame({"Error": [f"Database file not found: {DB_PATH}"]})
+        # Check for production environment indicator
+        is_production = os.environ.get("ENVIRONMENT", "").lower() == "production"
         
-        conn = sqlite3.connect(db_path)
-        query = f"SELECT * FROM {table_name} LIMIT {limit}"
-        df = pd.read_sql_query(query, conn)
-        conn.close()
-        return df
+        if is_production:
+            # Use PostgreSQL in production
+            import psycopg2
+            import psycopg2.extras
+            
+            db_url = os.environ.get("DATABASE_URL")
+            if not db_url:
+                logger.error("DATABASE_URL environment variable not set in production")
+                return pd.DataFrame({"Error": ["DATABASE_URL environment variable not set in production"]})
+                
+            # Connect to PostgreSQL
+            conn = psycopg2.connect(db_url)
+            
+            # Create a safe query using parameters
+            query = f"SELECT * FROM {table_name} LIMIT %s"
+            df = pd.read_sql_query(query, conn, params=(limit,))
+            conn.close()
+            return df
+        else:
+            # Use SQLite for local development
+            db_path = find_file(DB_PATH)
+            if not db_path:
+                logger.error(f"Database file not found: {DB_PATH}")
+                return pd.DataFrame({"Error": [f"Database file not found: {DB_PATH}"]})
+            
+            conn = sqlite3.connect(db_path)
+            query = f"SELECT * FROM {table_name} LIMIT {limit}"
+            df = pd.read_sql_query(query, conn)
+            conn.close()
+            return df
     except Exception as e:
         logger.error(f"Error fetching sample data: {str(e)}")
         return pd.DataFrame({"Error": [str(e)]})
