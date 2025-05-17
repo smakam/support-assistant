@@ -21,18 +21,27 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-def get_support_response(query: str) -> dict:
+def get_support_response(query: str, conversation_history=None) -> dict:
     """Send query to support API and return response"""
     headers = {
         "Authorization": f"Bearer {DEMO_TOKEN}",
         "Content-Type": "application/json"
     }
     url = f"{API_URL}/support/query"
-    logging.info(f"Requesting: {url} with headers={headers} and data={{'text': query}}")
+    
+    # Prepare the request payload
+    payload = {"text": query}
+    
+    # Add conversation history if provided and it's an escalation request
+    if conversation_history and query.lower().startswith("escalate:"):
+        payload["conversation_history"] = conversation_history
+        
+    logging.info(f"Requesting: {url} with headers={headers} and data={payload}")
+    
     response = requests.post(
         url,
         headers=headers,
-        json={"text": query}
+        json=payload
     )
     logging.info(f"Response status: {response.status_code}, text: {response.text}")
     try:

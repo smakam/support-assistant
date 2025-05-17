@@ -1,5 +1,5 @@
 from typing import Dict, Optional
-from langchain_community.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
 from langchain.chains import LLMChain
 from app.schemas.support import SourceType
@@ -8,6 +8,8 @@ from app.services.agents.dynamic_agent import DynamicDataAgent
 from app.services.agents.hybrid_agent import HybridAgent
 from app.core.config import settings
 from app.policies.rules import rules_block
+from langsmith import traceable, RunTree
+from datetime import datetime
 
 class QueryResponse:
     def __init__(
@@ -40,7 +42,7 @@ You are an AI support assistant for a gaming platform. Classify user queries int
 2. DYNAMIC - Questions about specific player or clan data (e.g., level, purchases, clan type, member counts) that require querying the live database.
 3. HYBRID - Questions that need both documentation and live data to answer fully.
 4. FOLLOW_UP - Queries missing necessary context (player name, clan name, timeframe) that require clarification.
-5. ESCALATION - Issues needing human support intervention.
+5. ESCALATION - Issues needing human support intervention, or when the user requests to speak to a human, escalate, or contact support.
 
 Examples to clarify classification:
 - "Is my clan a magic clan?" → FOLLOW_UP (missing clan name)
@@ -54,9 +56,16 @@ Examples to clarify classification:
 - "How many gold achievements has DragonSlayer99 earned?" → DYNAMIC (has player name, needs achievement data)
 - "What achievements has IceWarden unlocked?" → DYNAMIC (has player name, needs achievement data)
 - "What is DragonSlayer99's rank?" → DYNAMIC (has player name, needs leaderboard data)
+- "I want to speak to a human" → ESCALATION
+- "I need to escalate this issue" → ESCALATION
+- "Contact support" → ESCALATION
+- "My payment failed and nothing works" → ESCALATION
+- "There is a bug in the game that is not fixed" → ESCALATION
 
-IMPORTANT: Any query using "my", "me", or "I" without specifying a player name must be classified as FOLLOW_UP.
+IMPORTANT: Any query using "my", "me", or "I" without specifying a player name must be classified as FOLLOW_UP unless it is a clear request for escalation or human support, in which case classify as ESCALATION.
 If a query already contains a specific player name (like DragonSlayer99, IceWarden, ShadowNinja), it should NOT be classified as FOLLOW_UP.
+
+Requests for escalation, human support, or contacting support should always be classified as ESCALATION, regardless of context.
 
 Respond with exactly one uppercase category name (STATIC, DYNAMIC, HYBRID, FOLLOW_UP, or ESCALATION)."""),
             ("human", "{query}")
@@ -73,10 +82,78 @@ Respond with exactly one uppercase category name (STATIC, DYNAMIC, HYBRID, FOLLO
         self.hybrid_agent = HybridAgent()
         # self.jira_client = JiraClient()  # REMOVE eager JIRA init
 
-    async def route_query(self, query: str, user_context: Dict) -> QueryResponse:
-        # Classify the query
+    @traceable(name="route_query")
+    async def route_query(self, query: str, user_context: Dict, conversation_history: list = None, parent_run_id: str = None) -> QueryResponse:
+        """
+        Route a query to the appropriate agent based on its type.
+        
+        Args:
+            query: The user's query text
+            user_context: User context information
+            conversation_history: Previous conversation messages
+            parent_run_id: Optional parent run ID for maintaining trace continuity
+        """
+        # Use parent_run_id if provided to maintain trace continuity in LangSmith
+        run_tree_kwargs = {}
+        if parent_run_id:
+            print(f"Using parent run ID for trace continuity: {parent_run_id}")
+            run_tree_kwargs = {"parent_run_id": parent_run_id}
+            
+            # Attempt to mark this as a child run of the parent
+            try:
+                from langsmith import Client
+                client = Client()
+                
+                # Get current run id
+                current_run_id = None
+                try:
+                    from langsmith.run_trees import RunTree
+                    current_run = RunTree.get_current()
+                    if current_run:
+                        current_run_id = current_run.id
+                        print(f"Current run ID: {current_run_id}")
+                        
+                        # Link current run to parent
+                        if current_run_id and parent_run_id:
+                            client.update_run(parent_run_id, {"child_runs": [current_run_id]})
+                            print(f"Linked current run {current_run_id} as child of {parent_run_id}")
+                except Exception as e:
+                    print(f"Could not get current run ID: {e}")
+            except Exception as e:
+                print(f"Failed to link runs: {e}")
+                
+        # Check for explicit escalation phrases first, before even calling the classifier
+        escalation_phrases = [
+            "speak to a human", "talk to a human", "need a human", "contact support", 
+            "escalate", "support ticket", "create a ticket", "speak to an agent",
+            "talk to support", "need help from a person", "human support"
+        ]
+        
+        # If query contains any escalation phrase, bypass classification and go straight to escalation
+        if any(phrase in query.lower() for phrase in escalation_phrases) or query.lower().startswith("escalate:"):
+            print(f"Direct escalation detected: '{query}'")
+            # Make sure parent_run_id is available to maintain trace continuity in LangSmith
+            if parent_run_id:
+                print(f"Escalation will maintain parent_run_id: {parent_run_id}")
+            else:
+                print("Warning: No parent_run_id for escalation request, missing trace continuity")
+                # Check if conversation_history exists for better continuity
+                if conversation_history and len(conversation_history) > 0:
+                    print(f"Found {len(conversation_history)} messages in history for escalation")
+            
+            # Create support ticket with conversation history for context
+            ticket_id = await self.create_support_ticket(query, user_context, conversation_history, parent_run_id=parent_run_id)
+            return QueryResponse(
+                answer="I've created a support ticket for further assistance.",
+                source_type=SourceType.ESCALATION,
+                ticket_id=ticket_id
+            )
+        
+        # Otherwise proceed with regular classification
         classification_result = await self.classifier_chain.ainvoke({"query": query})
         query_type = classification_result.get("text", "").strip().upper()
+        
+        print(f"Query classified as: {query_type}")
 
         # Route to appropriate handler
         if query_type == "STATIC":
@@ -100,7 +177,7 @@ Respond with exactly one uppercase category name (STATIC, DYNAMIC, HYBRID, FOLLO
             )
         
         elif query_type == "ESCALATION":
-            ticket_id = await self.create_support_ticket(query, user_context)
+            ticket_id = await self.create_support_ticket(query, user_context, conversation_history, parent_run_id=parent_run_id)
             return QueryResponse(
                 answer="I've created a support ticket for further assistance.",
                 source_type=SourceType.ESCALATION,
@@ -113,6 +190,7 @@ Respond with exactly one uppercase category name (STATIC, DYNAMIC, HYBRID, FOLLO
             answer = await self.hybrid_agent.answer_query(query, user_context)
             return QueryResponse(answer=answer, source_type=SourceType.HYBRID)
 
+    @traceable(name="generate_follow_up")
     async def generate_follow_up(self, query: str) -> str:
         # Build a follow-up prompt that guides the user to rephrase their query with missing context
         follow_up_prompt = ChatPromptTemplate.from_messages([
@@ -138,18 +216,96 @@ DO NOT ask users to rephrase their entire question."""),
         response = await follow_up_chain.ainvoke({"query": query})
         return response.get("text", "Could you please rephrase your question with the needed details?")
 
-    async def create_support_ticket(self, query: str, user_context: Dict) -> str:
+    @traceable(name="create_support_ticket")
+    async def create_support_ticket(self, query: str, user_context: Dict, conversation_history: list = None, parent_run_id: str = None) -> str:
+        """
+        Create a support ticket with the conversation context.
+        
+        Args:
+            query: The user's query text that triggered escalation
+            user_context: User context information
+            conversation_history: Previous conversation messages
+            parent_run_id: Optional parent run ID for maintaining trace continuity in LangSmith
+        """
+        # If parent_run_id is provided, link this ticket creation to the parent conversation
+        run_tree_kwargs = {}
+        if parent_run_id:
+            run_tree_kwargs = {"parent_run_id": parent_run_id}
+            print(f"Creating ticket as part of conversation with parent_run_id: {parent_run_id}")
+            
         try:
             from app.services.jira.client import JiraClient
             jira_client = JiraClient()
+            
+            # Debug print for conversation history
+            if conversation_history:
+                print(f"Received conversation history with {len(conversation_history)} messages")
+                # Debug the first few messages to check content
+                for i, msg in enumerate(conversation_history[:3]):
+                    print(f"Message {i+1} type: {msg.get('type')}, content start: {msg.get('content', '')[:50]}...")
+            else:
+                print("No conversation history received")
+            
+            # Format the conversation history into a readable format
+            conversation_text = ""
+            if conversation_history and len(conversation_history) > 0:
+                conversation_text = "\nConversation History:\n"
+                for i, message in enumerate(conversation_history):
+                    # Add a message number for better readability
+                    msg_num = i + 1
+                    
+                    if isinstance(message, dict):
+                        if message.get('type') == 'user':
+                            conversation_text += f"\n[{msg_num}] 👤 USER: {message.get('content', '')}\n"
+                        elif message.get('type') == 'assistant':
+                            conversation_text += f"[{msg_num}] 🤖 ASSISTANT: {message.get('content', '')}\n"
+                        elif message.get('type') == 'followup':
+                            conversation_text += f"[{msg_num}] ❓ FOLLOW-UP: {message.get('content', '')}\n"
+                        elif message.get('type') == 'system':
+                            conversation_text += f"[{msg_num}] ⚙️ SYSTEM: {message.get('content', '')}\n"
+                
+                # Print a sample of the conversation text for debugging
+                print(f"Formatted conversation text (first 300 chars): {conversation_text[:300]}...")
+                print(f"Conversation history length for Jira: {len(conversation_text)} characters")
+            else:
+                print("WARNING: Proceeding without conversation history for Jira ticket")
+            
+            # Include more user context and information in the ticket
+            user_info = f"Username: {user_context.get('username', 'N/A')}\n" \
+                      f"Role: {user_context.get('role', 'N/A')}"
+                      
+            # Extract query details - handle the ESCALATE: prefix if present
+            actual_query = query
+            additional_details = ""
+            if query.startswith("ESCALATE:"):
+                parts = query.split("Additional details:", 1)
+                actual_query = parts[0].replace("ESCALATE:", "").strip()
+                if len(parts) > 1:
+                    additional_details = f"\nAdditional Details from User:\n{parts[1].strip()}"
+            
+            # Create a more structured ticket description with clear sections
+            description = f"""
+            === USER INFORMATION ===
+            {user_info}
+            
+            === ESCALATION QUERY ===
+            {actual_query}
+            {additional_details}
+            
+            === CONVERSATION HISTORY ===
+            {conversation_text}
+            
+            === TECHNICAL INFO ===
+            Parent Run ID: {parent_run_id or "N/A"}
+            Ticket Created: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+            """
+            
+            print(f"Creating ticket with description length: {len(description)}")
+            
             return await jira_client.create_ticket(
-                summary=f"Support Request from {user_context['username']}",
-                description=f"""
-                User: {user_context['username']}
-                Role: {user_context['role']}
-                Query: {query}
-                """,
-                issue_type="Support"
+                summary=f"Support Request from {user_context['username']}: {actual_query[:50]}...",
+                description=description,
+                issue_type="Task"
             )
         except Exception as e:
             print(f"JIRA integration error: {e}")

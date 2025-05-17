@@ -62,10 +62,10 @@ class Settings(BaseSettings):
     # JIRA
     JIRA_SERVER: str
     JIRA_EMAIL: str
-    JIRA_API_TOKEN: Optional[str] = os.getenv("JIRA_API_TOKEN", None)
+    JIRA_API_TOKEN: str
     JIRA_PROJECT_KEY: str
-    JIRA_URL: Optional[str] = os.getenv("JIRA_URL", None)
-    JIRA_USER_EMAIL: Optional[str] = os.getenv("JIRA_USER_EMAIL", None)
+    JIRA_URL: Optional[str] = None
+    JIRA_USER_EMAIL: Optional[str] = None
     DB_PATH: str = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "game_data.db")
 
     class Config:

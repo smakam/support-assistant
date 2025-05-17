@@ -9,12 +9,14 @@ A conversational AI support assistant for gaming support, capable of answering q
 - **Follow-up capabilities** for ambiguous queries
 - **Feedback system** to collect user input on answer quality
 - **Sample questions** for quick testing
+- **LangSmith integration** for observability and debugging
 
 ## Project Structure
 
 - **Backend**: FastAPI server with AI agents
 - **Frontend**: Streamlit chat interface
 - **Database**: SQLite with gaming support data
+- **Observability**: LangSmith tracing and evaluation
 
 ## Setup Instructions
 
@@ -44,9 +46,15 @@ A conversational AI support assistant for gaming support, capable of answering q
 
    - Create a `.env` file in the root directory
    - Add the following variables:
+
      ```
      OPENAI_API_KEY=your_openai_api_key
      DATABASE_URL=sqlite:///kgen_gaming_support_advanced.db
+
+     # Optional LangSmith configuration for observability
+     LANGCHAIN_API_KEY=your_langsmith_api_key
+     LANGCHAIN_PROJECT=gaming-support-assistant
+     LANGCHAIN_TRACING_V2=true
      ```
 
 5. **Run the backend server**
@@ -65,6 +73,7 @@ A conversational AI support assistant for gaming support, capable of answering q
 7. **Access the application**
    - Backend API: http://localhost:8000
    - Frontend: http://localhost:8501
+   - LangSmith Dashboard: https://smith.langchain.com/
 
 ## Deployment Options
 
@@ -118,6 +127,22 @@ The application uses different settings for development and production:
 
 To switch between environments, set the `ENVIRONMENT` variable to either `development` or `production` in your `.env` file.
 
+## LangSmith Integration
+
+The application integrates with LangSmith for enhanced observability, debugging, and evaluation of AI conversations. See [docs/langsmith.md](docs/langsmith.md) for detailed instructions on:
+
+- Setting up LangSmith for your development environment
+- Using traces to debug conversation flows
+- Monitoring LLM performance metrics
+- Evaluating and improving agent responses
+
+LangSmith helps identify issues with:
+
+- Query classification
+- Conversation context handling
+- Support ticket creation processes
+- End-to-end conversation flows
+
 ## License
 
 [MIT License](LICENSE)
@@ -130,3 +155,4 @@ Built with:
 - FastAPI
 - Streamlit
 - LangChain
+- LangSmith

@@ -1,5 +1,5 @@
 from typing import Dict
-from langchain_community.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
 from langchain_community.utilities.sql_database import SQLDatabase
 from langchain.chains.llm import LLMChain

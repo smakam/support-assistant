@@ -1,8 +1,15 @@
+from dotenv import load_dotenv
+import os
+# Load .env from the project root
+load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1.api import api_router
-import os
+from app.core.tracing import setup_langsmith
+
+# Initialize LangSmith tracing
+setup_langsmith()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
