@@ -68,6 +68,68 @@ def find_file(filename):
     
     return None
 
+# Function to get fallback schema for all standard tables in the application
+def get_fallback_schema():
+    """Return fallback schema structure when database is not available"""
+    return {
+        "players": [
+            {"name": "player_id", "type": "INTEGER"},
+            {"name": "username", "type": "TEXT"},
+            {"name": "rank", "type": "TEXT"},
+            {"name": "level", "type": "INTEGER"},
+            {"name": "xp", "type": "INTEGER"}
+        ],
+        "clans": [
+            {"name": "clan_id", "type": "INTEGER"},
+            {"name": "clan_name", "type": "TEXT"},
+            {"name": "clan_type", "type": "TEXT"},
+            {"name": "founded_date", "type": "TEXT"},
+            {"name": "member_count", "type": "INTEGER"}
+        ],
+        "clan_members": [
+            {"name": "id", "type": "INTEGER"},
+            {"name": "player_id", "type": "INTEGER"},
+            {"name": "clan_id", "type": "INTEGER"},
+            {"name": "join_date", "type": "TEXT"},
+            {"name": "role", "type": "TEXT"}
+        ],
+        "items": [
+            {"name": "item_id", "type": "INTEGER"},
+            {"name": "item_name", "type": "TEXT"},
+            {"name": "rarity", "type": "TEXT"},
+            {"name": "type", "type": "TEXT"},
+            {"name": "description", "type": "TEXT"}
+        ],
+        "player_items": [
+            {"name": "id", "type": "INTEGER"},
+            {"name": "player_id", "type": "INTEGER"},
+            {"name": "item_id", "type": "INTEGER"},
+            {"name": "quantity", "type": "INTEGER"},
+            {"name": "acquired_date", "type": "TEXT"}
+        ],
+        "achievements": [
+            {"name": "achievement_id", "type": "INTEGER"},
+            {"name": "name", "type": "TEXT"},
+            {"name": "description", "type": "TEXT"},
+            {"name": "xp_reward", "type": "INTEGER"},
+            {"name": "difficulty", "type": "TEXT"}
+        ],
+        "player_achievements": [
+            {"name": "id", "type": "INTEGER"},
+            {"name": "player_id", "type": "INTEGER"},
+            {"name": "achievement_id", "type": "INTEGER"},
+            {"name": "date_earned", "type": "TEXT"}
+        ],
+        "purchases": [
+            {"name": "purchase_id", "type": "INTEGER"},
+            {"name": "player_id", "type": "INTEGER"},
+            {"name": "item_id", "type": "INTEGER"},
+            {"name": "purchase_date", "type": "TEXT"},
+            {"name": "amount", "type": "REAL"},
+            {"name": "currency", "type": "TEXT"}
+        ]
+    }
+
 # Function to read knowledge base content
 def read_knowledge_base():
     try:
@@ -96,22 +158,7 @@ def get_db_schema():
             db_url = os.environ.get("DATABASE_URL")
             if not db_url:
                 logger.error("DATABASE_URL environment variable not set in production")
-                return {
-                    "players": [
-                        {"name": "player_id", "type": "INTEGER"},
-                        {"name": "username", "type": "TEXT"},
-                        {"name": "rank", "type": "TEXT"},
-                        {"name": "level", "type": "INTEGER"},
-                        {"name": "xp", "type": "INTEGER"}
-                    ],
-                    "clans": [
-                        {"name": "clan_id", "type": "INTEGER"},
-                        {"name": "clan_name", "type": "TEXT"},
-                        {"name": "clan_type", "type": "TEXT"},
-                        {"name": "founded_date", "type": "TEXT"},
-                        {"name": "member_count", "type": "INTEGER"}
-                    ]
-                }
+                return get_fallback_schema()
                 
             try:
                 # Connect to PostgreSQL
@@ -142,44 +189,14 @@ def get_db_schema():
             except Exception as e:
                 logger.error(f"Error connecting to PostgreSQL: {str(e)}")
                 # Return a fallback schema structure for UI display
-                return {
-                    "players": [
-                        {"name": "player_id", "type": "INTEGER"},
-                        {"name": "username", "type": "TEXT"},
-                        {"name": "rank", "type": "TEXT"},
-                        {"name": "level", "type": "INTEGER"},
-                        {"name": "xp", "type": "INTEGER"}
-                    ],
-                    "clans": [
-                        {"name": "clan_id", "type": "INTEGER"},
-                        {"name": "clan_name", "type": "TEXT"},
-                        {"name": "clan_type", "type": "TEXT"},
-                        {"name": "founded_date", "type": "TEXT"},
-                        {"name": "member_count", "type": "INTEGER"}
-                    ]
-                }
+                return get_fallback_schema()
         else:
             # Use SQLite for local development
             db_path = find_file(DB_PATH)
             if not db_path:
                 logger.error(f"Database file not found: {DB_PATH}")
                 # Return a fallback schema structure for UI display
-                return {
-                    "players": [
-                        {"name": "player_id", "type": "INTEGER"},
-                        {"name": "username", "type": "TEXT"},
-                        {"name": "rank", "type": "TEXT"},
-                        {"name": "level", "type": "INTEGER"},
-                        {"name": "xp", "type": "INTEGER"}
-                    ],
-                    "clans": [
-                        {"name": "clan_id", "type": "INTEGER"},
-                        {"name": "clan_name", "type": "TEXT"},
-                        {"name": "clan_type", "type": "TEXT"},
-                        {"name": "founded_date", "type": "TEXT"},
-                        {"name": "member_count", "type": "INTEGER"}
-                    ]
-                }
+                return get_fallback_schema()
             
             logger.info(f"Found database at: {db_path}")
             conn = sqlite3.connect(db_path)
@@ -201,22 +218,7 @@ def get_db_schema():
     except Exception as e:
         logger.error(f"Error reading database schema: {str(e)}")
         # Return a fallback schema structure for UI display
-        return {
-            "players": [
-                {"name": "player_id", "type": "INTEGER"},
-                {"name": "username", "type": "TEXT"},
-                {"name": "rank", "type": "TEXT"},
-                {"name": "level", "type": "INTEGER"},
-                {"name": "xp", "type": "INTEGER"}
-            ],
-            "clans": [
-                {"name": "clan_id", "type": "INTEGER"},
-                {"name": "clan_name", "type": "TEXT"},
-                {"name": "clan_type", "type": "TEXT"},
-                {"name": "founded_date", "type": "TEXT"},
-                {"name": "member_count", "type": "INTEGER"}
-            ]
-        }
+        return get_fallback_schema()
 
 # Function to get sample data from tables
 def get_sample_data(table_name, limit=5):
@@ -265,34 +267,67 @@ def get_sample_fallback_data(table_name):
     """Return sample data for a given table when database is not available"""
     if table_name.lower() == "players":
         return pd.DataFrame({
-            "player_id": [1, 2, 3],
-            "username": ["DragonSlayer99", "IceWarden", "ShadowNinja"],
-            "rank": ["Platinum", "Gold", "Diamond"],
-            "level": [42, 37, 55],
-            "xp": [12500, 9800, 18700]
+            "player_id": [1, 2, 3, 4, 5],
+            "username": ["DragonSlayer99", "IceWarden", "ShadowNinja", "PhoenixRider", "MysticMage"],
+            "rank": ["Platinum", "Gold", "Diamond", "Silver", "Platinum"],
+            "level": [42, 37, 55, 28, 44],
+            "xp": [12500, 9800, 18700, 5600, 13200]
         })
     elif table_name.lower() == "clans":
         return pd.DataFrame({
-            "clan_id": [1, 2, 3],
-            "clan_name": ["FireMages", "IceDragons", "ShadowAssassins"],
-            "clan_type": ["Magic", "Elemental", "Stealth"],
-            "founded_date": ["2023-01-15", "2022-11-05", "2023-03-22"],
-            "member_count": [25, 18, 31]
+            "clan_id": [1, 2, 3, 4, 5],
+            "clan_name": ["FireMages", "IceDragons", "ShadowAssassins", "PhoenixRiders", "MysticWarriors"],
+            "clan_type": ["Magic", "Elemental", "Stealth", "Mythical", "Arcane"],
+            "founded_date": ["2023-01-15", "2022-11-05", "2023-03-22", "2023-02-14", "2022-12-10"],
+            "member_count": [25, 18, 31, 22, 27]
         })
     elif table_name.lower() == "clan_members":
         return pd.DataFrame({
-            "id": [1, 2, 3],
-            "player_id": [1, 2, 3],
-            "clan_id": [2, 1, 3],
-            "join_date": ["2023-02-10", "2023-01-20", "2023-04-05"],
-            "role": ["Member", "Leader", "Officer"]
+            "id": [1, 2, 3, 4, 5],
+            "player_id": [1, 2, 3, 4, 5],
+            "clan_id": [2, 1, 3, 4, 5],
+            "join_date": ["2023-02-10", "2023-01-20", "2023-04-05", "2023-03-15", "2023-01-30"],
+            "role": ["Member", "Leader", "Officer", "Member", "Officer"]
         })
     elif table_name.lower() == "items":
         return pd.DataFrame({
-            "item_id": [1, 2, 3],
-            "item_name": ["Flame Sword", "Ice Staff", "Shadow Cloak"],
-            "rarity": ["Legendary", "Rare", "Epic"],
-            "type": ["Weapon", "Weapon", "Armor"]
+            "item_id": [1, 2, 3, 4, 5],
+            "item_name": ["Flame Sword", "Ice Staff", "Shadow Cloak", "Phoenix Feather", "Mystic Orb"],
+            "rarity": ["Legendary", "Rare", "Epic", "Legendary", "Epic"],
+            "type": ["Weapon", "Weapon", "Armor", "Consumable", "Artifact"],
+            "description": ["A sword engulfed in flames", "A staff that freezes enemies", "A cloak that grants stealth", "Revives player once", "Enhances magical abilities"]
+        })
+    elif table_name.lower() == "player_items":
+        return pd.DataFrame({
+            "id": [1, 2, 3, 4, 5],
+            "player_id": [1, 1, 2, 3, 5],
+            "item_id": [1, 3, 2, 3, 5],
+            "quantity": [1, 1, 1, 2, 1],
+            "acquired_date": ["2023-03-10", "2023-04-15", "2023-02-20", "2023-05-05", "2023-03-25"]
+        })
+    elif table_name.lower() == "achievements":
+        return pd.DataFrame({
+            "achievement_id": [1, 2, 3, 4, 5],
+            "name": ["Dragon Slayer", "Ice Master", "Shadow Walker", "Phoenix Rising", "Arcane Scholar"],
+            "description": ["Defeat 10 dragons", "Master ice magic", "Remain undetected for 1 hour", "Revive 5 times", "Learn 20 spells"],
+            "xp_reward": [1000, 800, 1200, 1500, 1000],
+            "difficulty": ["Hard", "Medium", "Hard", "Very Hard", "Medium"]
+        })
+    elif table_name.lower() == "player_achievements":
+        return pd.DataFrame({
+            "id": [1, 2, 3, 4, 5],
+            "player_id": [1, 1, 2, 3, 5],
+            "achievement_id": [1, 3, 2, 3, 5],
+            "date_earned": ["2023-03-15", "2023-04-20", "2023-02-25", "2023-05-10", "2023-03-30"]
+        })
+    elif table_name.lower() == "purchases":
+        return pd.DataFrame({
+            "purchase_id": [1, 2, 3, 4, 5],
+            "player_id": [1, 2, 3, 4, 5],
+            "item_id": [5, 3, 1, 4, 2],
+            "purchase_date": ["2023-04-05", "2023-03-20", "2023-05-15", "2023-04-25", "2023-05-10"],
+            "amount": [9.99, 4.99, 14.99, 19.99, 4.99],
+            "currency": ["USD", "USD", "USD", "USD", "USD"]
         })
     else:
         # Generic fallback for any other table
