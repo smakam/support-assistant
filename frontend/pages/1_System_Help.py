@@ -24,7 +24,7 @@ def main():
     st.title("System Architecture & Documentation")
     
     st.markdown("""
-    ## KGen AI Support Assistant
+    ## AI Customer Assistant
 
     This demo application showcases an AI-powered customer support system for a fictional gaming platform. 
     The system uses a combination of static knowledge and dynamic game data to answer user queries.
@@ -33,7 +33,7 @@ def main():
     # Show architecture diagram
     st.subheader("System Architecture")
     arch_diagram = create_system_diagram()
-    st.image(arch_diagram, caption="KGen AI Support System Architecture")
+    st.image(arch_diagram, caption="AI Customer Assistant System Architecture")
     
     # Explanation of components
     st.markdown("""
@@ -161,7 +161,7 @@ def main():
     ax.arrow(0.5, 0.41, 0, -0.21, head_width=0.01, head_length=0.01, fc='black', ec='black', linestyle='dashed')
     ax.arrow(0.65, 0.45, -0.1, -0.25, head_width=0.01, head_length=0.01, fc='black', ec='black', linestyle='dashed')
     
-    plt.title("KGen AI Support Assistant - Technical Architecture", fontsize=14)
+    plt.title("AI Customer Assistant - Technical Architecture", fontsize=14)
     
     # Legend
     legend_elements = [
@@ -182,7 +182,7 @@ def main():
     plt.savefig(buf, format='png', dpi=100)
     buf.seek(0)
     img = Image.open(buf)
-    st.image(img, caption="KGen AI Support System Technical Architecture")
+    st.image(img, caption="AI Customer Assistant System Technical Architecture")
 
 if __name__ == "__main__":
     main() 

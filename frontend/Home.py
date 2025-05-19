@@ -36,7 +36,7 @@ def main():
     logger.info("Streamlit app started")
     
     # Regular chat UI
-    st.title("KGen AI Support Assistant")
+    st.title("AI Customer Assistant")
     st.write("Ask any question about game mechanics, player stats, or clan information!")
 
     # Add brief info about what the app does

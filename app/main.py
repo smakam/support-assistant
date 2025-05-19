@@ -35,7 +35,7 @@ app.include_router(api_router, prefix=settings.API_V1_PREFIX)
 @app.get("/")
 async def root():
     return {
-        "message": "Welcome to KGen AI Support Assistant API",
+        "message": "Welcome to AI Customer Assistant API",
         "docs_url": "/docs",
         "redoc_url": "/redoc"
     } 

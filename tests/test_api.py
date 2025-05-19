@@ -10,7 +10,7 @@ client = TestClient(app)
 def test_root():
     response = client.get("/")
     assert response.status_code == 200
-    assert "Welcome to KGen AI Support Assistant API" in response.text
+    assert "Welcome to AI Customer Assistant API" in response.text
 
 def test_support_query():
     headers = {"Authorization": f"Bearer {DEMO_TOKEN}"}

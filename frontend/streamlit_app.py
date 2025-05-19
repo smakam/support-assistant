@@ -43,7 +43,7 @@ if IS_PRODUCTION:
 
 # Set page config for main page
 st.set_page_config(
-    page_title="KGen AI Support Assistant",
+    page_title="AI Customer Assistant",
     page_icon="🤖",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -623,7 +623,7 @@ def main():
     logger.info("Streamlit app started")
     
     # Regular chat UI
-    st.title("KGen AI Support Assistant")
+    st.title("AI Customer Assistant")
     st.write("Ask any question about game mechanics, player stats, or clan information!")
 
     # Initialize session state for message history

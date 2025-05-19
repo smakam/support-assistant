@@ -1,4 +1,4 @@
-# KGen AI Support Assistant
+# AI Customer Assistant
 
 A conversational AI support assistant for gaming support, capable of answering questions about game mechanics, player stats, clan information, and more.
 

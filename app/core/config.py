@@ -8,7 +8,7 @@ import os
 class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"  # We'll use this internally
     API_V1_PREFIX: str = "/api/v1"  # Always starts with '/'; can be overridden by .env
-    PROJECT_NAME: str = "KGen AI Support"
+    PROJECT_NAME: str = "AI Customer Assistant"
     BACKEND_CORS_ORIGINS: List[Union[str, AnyHttpUrl]] = []
 
     @validator("BACKEND_CORS_ORIGINS", pre=True)
