@@ -35,3 +35,4 @@ certifi==2023.7.22
 # Additional dependencies
 faiss-cpu 
 matplotlib>=3.7.0 
+jira 
